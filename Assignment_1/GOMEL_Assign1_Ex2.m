@@ -1,155 +1,166 @@
-% 30/10/2022 SGN - Jules GOMEL
-% MatLab code for Assignment 1 - Exercise 2
+% 
+% Exercise 2 :  Impulsive guidance
+%
+% Two impulse transfer problem : First guess, simple shooting and multiple
+% shooting
+%
+% SGN - 08/11/2022 - Jules GOMEL ☺
+% AY 2022-23 -- Prof. F. Topputo and P. Di Lizia; TA: A. Morselli and M. Maestrini
 
 clear;clc;close all
 format long g
+
 %% EX2 1) - Done
-clear;clc;close all
+clear; clc; close all
 format long g
 % Constants
-mu=1.21506683e-2;
-Re=6378e3;
-hi=167e3;
-Rm=1738e3;
-hf=100e3;
-DU=3.84405000e8;
+mu = 1.21506683e-2;
+Re = 6378e3;
+hi = 167e3;
+Rm = 1738e3;
+hf = 100e3;
+DU = 3.84405000e8;
 % Parameters
-alpha=1.5*pi;
-beta=1.41;
-delta=7;
-ti=0;
-r0=(Re+hi)/DU;
-ri=r0;
-rf=(Rm+hf)/DU;
-v0=beta*sqrt((1-mu)/r0);
+alpha = 1.5 * pi;
+beta = 1.41;
+delta = 7;
+ti = 0;
+r0 = (Re + hi) / DU;
+ri = r0;
+rf = (Rm + hf) / DU;
+v0 = beta * sqrt((1 - mu) / r0);
 % Initial state
-x0=r0*cos(alpha)-mu;
-y0=r0*sin(alpha);
-x0dot=-(v0-r0)*sin(alpha);
-y0dot=(v0-r0)*cos(alpha);
-xx0=[x0 y0 x0dot y0dot];
+x0 = r0 * cos(alpha) - mu;
+y0 = r0 * sin(alpha);
+x0dot = -(v0 - r0) * sin(alpha);
+y0dot = (v0 - r0) * cos(alpha);
+xx0 = [x0 y0 x0dot y0dot];
 % First guess solution
-options=odeset('AbsTol',2.5e-14,'RelTol',2.5e-14);
-[tt,xx]=ode113(@PBRFBP_rhs,[ti ti+delta],xx0, options, mu);
+options = odeset('AbsTol', 2.5e-14, 'RelTol', 2.5e-14);
+[tt, xx] = ode113(@PBRFBP_rhs, [ti ti + delta], xx0, options, mu);
 
-XX=zeros(size(xx));
-for i=1:length(tt)
-    X1=(xx(i,1)+mu)*cos(tt(i))-xx(i,2)*sin(tt(i));
-    Y1=(xx(i,1)+mu)*sin(tt(i))+xx(i,2)*cos(tt(i));
-    X1dot=(xx(i,3)-xx(i,2))*cos(tt(i))-(xx(i,4)-xx(i,1))*sin(tt(i));
-    Y1dot=(xx(i,3)-xx(i,2))*sin(tt(i))+(xx(i,4)-xx(i,1))*cos(tt(i));
-    XX(i,:)=[X1 Y1 X1dot Y1dot];
+XX = zeros(size(xx));
+for i = 1:length(tt)
+    X1 = (xx(i, 1) + mu) * cos(tt(i)) - xx(i, 2) * sin(tt(i));
+    Y1 = (xx(i, 1) + mu) * sin(tt(i)) + xx(i, 2) * cos(tt(i));
+    X1dot = (xx(i, 3) - xx(i, 2)) * cos(tt(i)) - (xx(i, 4) - xx(i, 1)) * sin(tt(i));
+    Y1dot = (xx(i, 3) - xx(i, 2)) * sin(tt(i)) + (xx(i, 4) - xx(i, 1)) * cos(tt(i));
+    XX(i, :) = [X1 Y1 X1dot Y1dot];
 end
 % Rotating frame
 figure
 hold on
 xlabel('x')
 ylabel('y')
-plot(xx(:,1),xx(:,2))
-scatter(-mu,0,10,'red')
-scatter(1-mu,0,10,'k')
+plot(xx(:, 1), xx(:, 2))
+scatter(-mu, 0, 10, 'red')
+scatter(1 - mu, 0, 10, 'k')
 hold off
 % Earth-centered
-theta=0:0.01:2*pi;
-circle=(1-mu)*[cos(theta);sin(theta)];
+theta = 0:0.01:2 * pi;
+circle = (1 - mu) * [cos(theta); sin(theta)];
 figure
 hold on
 xlabel('x')
 ylabel('y')
-plot(XX(:,1),XX(:,2))
-plot(circle(1,:),circle(2,:))
+plot(XX(:, 1), XX(:, 2))
+plot(circle(1, :), circle(2, :))
 axis equal
-scatter(0,0,10,'red')
+scatter(0, 0, 10, 'red')
 hold off
+
 
 %% EX2 2)a) - Done
+% Optimization
+f = @(X) abs(deltavi(X)) + abs(deltavf(X));
+ti0 = ti;
+X0 = [x0 y0 x0dot y0dot ti0 ti0 + delta];
+LB(1:4) = -Inf;
+LB(5:6) = -0.1;
+UB(1:4) = Inf;
+UB(5) = 2 * pi / 0.925195985;
+UB(6) = UB(5) + 23 * 4.34811305;
+options = optimset('Display', 'iter', 'LargeScale', 'off', 'Algorithm', 'active-set');
+Xsol = fmincon(@(X) f(X), X0, [], [], [], [], LB, UB, @(X) con(X), options);
+f = f(Xsol);
 
-f=@(X) abs(deltavi(X))+abs(deltavf(X));
-ti0=ti;
-X0=[x0 y0 x0dot y0dot ti0 ti0+delta];
-LB(1:4)=-Inf;
-LB(5:6)=-0.1;
-UB(1:4)=Inf;
-UB(5)=2*pi/0.925195985;
-UB(6)=UB(5)+23*4.34811305;
-options = optimset('Display','iter', 'LargeScale', 'off','Algorithm','active-set');
-Xsol=fmincon(@(X) f(X),X0,[],[],[],[],LB,UB,@(X) con(X),options);
-f=f(Xsol)
-% Plot the optimized solution
-xx0_op=Xsol(1:4);
-ti_op=Xsol(5);
-tf_op=Xsol(6);
+% Optimized solution plot
+xx0_op = Xsol(1:4);
+ti_op = Xsol(5);
+tf_op = Xsol(6);
 
+options = odeset('AbsTol', 2.5e-14, 'RelTol', 2.5e-14);
+[tt_op, xx_op] = ode113(@PBRFBP_rhs, [ti_op tf_op], xx0_op, options, mu);
 
-options=odeset('AbsTol',2.5e-14,'RelTol',2.5e-14);
-[tt_op,xx_op]=ode113(@PBRFBP_rhs,[ti_op tf_op],xx0_op, options, mu);
-
-XX_op=zeros(size(xx_op));
-for i=1:length(tt_op)
-    X1=(xx_op(i,1)+mu)*cos(tt_op(i))-xx_op(i,2)*sin(tt_op(i));
-    Y1=(xx_op(i,1)+mu)*sin(tt_op(i))+xx_op(i,2)*cos(tt_op(i));
-    X1dot=(xx_op(i,3)-xx_op(i,2))*cos(tt_op(i))-(xx_op(i,4)-xx_op(i,1))*sin(tt_op(i));
-    Y1dot=(xx_op(i,3)-xx_op(i,2))*sin(tt_op(i))+(xx_op(i,4)-xx_op(i,1))*cos(tt_op(i));
-    XX_op(i,:)=[X1 Y1 X1dot Y1dot];
+XX_op = zeros(size(xx_op));
+for i = 1:length(tt_op)
+    X1 = (xx_op(i, 1) + mu) * cos(tt_op(i)) - xx_op(i, 2) * sin(tt_op(i));
+    Y1 = (xx_op(i, 1) + mu) * sin(tt_op(i)) + xx_op(i, 2) * cos(tt_op(i));
+    X1dot = (xx_op(i, 3) - xx_op(i, 2)) * cos(tt_op(i)) - (xx_op(i, 4) - xx_op(i, 1)) * sin(tt_op(i));
+    Y1dot = (xx_op(i, 3) - xx_op(i, 2)) * sin(tt_op(i)) + (xx_op(i, 4) - xx_op(i, 1)) * cos(tt_op(i));
+    XX_op(i, :) = [X1 Y1 X1dot Y1dot];
 end
-
 
 % Rotating frame
 figure
 hold on
 xlabel('x')
 ylabel('y')
-plot(xx_op(:,1),xx_op(:,2))
-scatter(-mu,0,10,'red')
-scatter(1-mu,0,10,'k')
+plot(xx_op(:, 1), xx_op(:, 2))
+scatter(-mu, 0, 10, 'red')
+scatter(1 - mu, 0, 10, 'k')
 hold off
+
 % Earth-centered
 figure
 hold on
-theta=0:0.01:2*pi;
-circle=(1-mu)*[cos(theta);sin(theta)];
+theta = 0:0.01:2 * pi;
+circle = (1 - mu) * [cos(theta); sin(theta)];
 axis equal
-plot(circle(1,:),circle(2,:))
+plot(circle(1, :), circle(2, :))
 xlabel('x')
 ylabel('y')
-plot(XX_op(:,1),XX_op(:,2))
-scatter(0,0,10,'red')
+plot(XX_op(:, 1), XX_op(:, 2))
+scatter(0, 0, 10, 'red')
 hold off
+
 
 %% EX2 2)b) - Done
-clear;clc;close all
+clear; clc; close all
 format long g
+
 % First guess
-constants=constant();
-X0=[constants.xx0 constants.ti constants.ti+constants.delta];
-LB(1:4)=-Inf;
-LB(5:6)=0;
-UB(1:4)=Inf;
-UB(5)=2*pi/0.925195985;
-UB(6)=UB(5)+23*4.34811305;
+constants = constant();
+X0 = [constants.xx0 constants.ti constants.ti + constants.delta];
+LB(1:4) = -Inf;
+LB(5:6) = 0;
+UB(1:4) = Inf;
+UB(5) = 2 * pi / 0.925195985;
+UB(6) = UB(5) + 23 * 4.34811305;
 
-options_grad = optimoptions(@fmincon,'Display','iter',"Algorithm","active-set",...
-   "EnableFeasibilityMode",true,'MaxFunctionEvaluations',10000,'SpecifyObjectiveGradient',true,'SpecifyConstraintGradient',true);
+options_grad = optimoptions(@fmincon, 'Display', 'iter', 'Algorithm', 'active-set', ...
+    'EnableFeasibilityMode', true, 'MaxFunctionEvaluations', 10000, ...
+    'SpecifyObjectiveGradient', true, 'SpecifyConstraintGradient', true);
 
-Xsol=fmincon(@(X) grad_f(X),X0,[],[],[],[],LB,UB,@(X) grad_con(X),options_grad);
-f=grad_f(Xsol)
+Xsol = fmincon(@(X) grad_f(X), X0, [], [], [], [], LB, UB, @(X) grad_con(X), options_grad);
+f = grad_f(Xsol);
+
 % Plot the optimized solution
-mu=constants.mu;
-xx0_op=Xsol(1:4);
-ti_op=Xsol(5);
-tf_op=Xsol(6);
+mu = constants.mu;
+xx0_op = Xsol(1:4);
+ti_op = Xsol(5);
+tf_op = Xsol(6);
 
+options = odeset('AbsTol', 2.5e-14, 'RelTol', 2.5e-14);
+[tt_op, xx_op] = ode113(@PBRFBP_rhs, [ti_op tf_op], xx0_op, options, mu);
 
-options=odeset('AbsTol',2.5e-14,'RelTol',2.5e-14);
-[tt_op,xx_op]=ode113(@PBRFBP_rhs,[ti_op tf_op],xx0_op, options, mu);
-
-XX_op=zeros(size(xx_op));
-for i=1:length(tt_op)
-    X1=(xx_op(i,1)+mu)*cos(tt_op(i))-xx_op(i,2)*sin(tt_op(i));
-    Y1=(xx_op(i,1)+mu)*sin(tt_op(i))+xx_op(i,2)*cos(tt_op(i));
-    X1dot=(xx_op(i,3)-xx_op(i,2))*cos(tt_op(i))-(xx_op(i,4)-xx_op(i,1))*sin(tt_op(i));
-    Y1dot=(xx_op(i,3)-xx_op(i,2))*sin(tt_op(i))+(xx_op(i,4)-xx_op(i,1))*cos(tt_op(i));
-    XX_op(i,:)=[X1 Y1 X1dot Y1dot];
+XX_op = zeros(size(xx_op));
+for i = 1:length(tt_op)
+    X1 = (xx_op(i, 1) + mu) * cos(tt_op(i)) - xx_op(i, 2) * sin(tt_op(i));
+    Y1 = (xx_op(i, 1) + mu) * sin(tt_op(i)) + xx_op(i, 2) * cos(tt_op(i));
+    X1dot = (xx_op(i, 3) - xx_op(i, 2)) * cos(tt_op(i)) - (xx_op(i, 4) - xx_op(i, 1)) * sin(tt_op(i));
+    Y1dot = (xx_op(i, 3) - xx_op(i, 2)) * sin(tt_op(i)) + (xx_op(i, 4) - xx_op(i, 1)) * cos(tt_op(i));
+    XX_op(i, :) = [X1 Y1 X1dot Y1dot];
 end
 
 % Rotating frame
@@ -157,94 +168,100 @@ figure
 hold on
 xlabel('x')
 ylabel('y')
-plot(xx_op(:,1),xx_op(:,2))
-scatter(-mu,0,10,'red')
-scatter(1-mu,0,10,'k')
+plot(xx_op(:, 1), xx_op(:, 2))
+scatter(-mu, 0, 10, 'red')
+scatter(1 - mu, 0, 10, 'k')
 hold off
+
 % Earth-centered
 figure
 hold on
-axis equal 
+axis equal
 xlabel('x')
 ylabel('y')
-theta=0:0.01:2*pi;
-circle=(1-mu)*[cos(theta);sin(theta)];
+theta = 0:0.01:2 * pi;
+circle = (1 - mu) * [cos(theta); sin(theta)];
 axis equal
-plot(circle(1,:),circle(2,:))
-plot(XX_op(:,1),XX_op(:,2))
-scatter(0,0,10,'red')
+plot(circle(1, :), circle(2, :))
+plot(XX_op(:, 1), XX_op(:, 2))
+scatter(0, 0, 10, 'red')
 hold off
 
+
 %% EX2 3) - Done
-clear;clc;close all
+clear; clc; close all
 format long g
+
 % Initialize first-guess and N
-mu=1.21506683e-2;
-Re=6378e3;
-hi=167e3;
-Rm=1738e3;
-hf=100e3;
-DU=3.84405000e8;
-alpha=1.5*pi;
-beta=1.41;
-delta=7;
-ti=0;
-r0=(Re+hi)/DU;
-ri=r0;
-rf=(Rm+hf)/DU;
-v0=beta*sqrt((1-mu)/r0);
-options=odeset('AbsTol',2.5e-14,'RelTol',2.5e-14);
+mu = 1.21506683e-2;
+Re = 6378e3;
+hi = 167e3;
+Rm = 1738e3;
+hf = 100e3;
+DU = 3.84405000e8;
+alpha = 1.5 * pi;
+beta = 1.41;
+delta = 7;
+ti = 0;
+r0 = (Re + hi) / DU;
+ri = r0;
+rf = (Rm + hf) / DU;
+v0 = beta * sqrt((1 - mu) / r0);
+options = odeset('AbsTol', 2.5e-14, 'RelTol', 2.5e-14);
+
 % Initial state
-x0=r0*cos(alpha)-mu;
-y0=r0*sin(alpha);
-x0dot=-(v0-r0)*sin(alpha);
-y0dot=(v0-r0)*cos(alpha);
-xx0=[x0 y0 x0dot y0dot];
-N=4;
+x0 = r0 * cos(alpha) - mu;
+y0 = r0 * sin(alpha);
+x0dot = -(v0 - r0) * sin(alpha);
+y0dot = (v0 - r0) * cos(alpha);
+xx0 = [x0 y0 x0dot y0dot];
+N = 4;
+
 % Time tab
-tt0=time_tab(ti,ti+delta,N);
+tt0 = time_tab(ti, ti + delta, N);
+
 % First guess tab
-xx1=xx0;
-[~,xx]=ode113(@PBRFBP_rhs,[tt0(1) tt0(end)],xx0, options, mu);
+xx1 = xx0;
+[~, xx] = ode113(@PBRFBP_rhs, [tt0(1) tt0(end)], xx0, options, mu);
 
+y0 = [xx1 xx(round(length(xx1)/4),:) xx(round(length(xx1)/2),:) xx(end,:) tt0(1) tt0(end)];
+UB = zeros(1, 18);
+LB = zeros(1, 18);
+UB(1:16) = Inf;
+LB(1:16) = -Inf;
+UB(17) = 2 * pi / 0.925195985;
+UB(18) = Inf;
 
-y0=[xx1 xx(round(length(xx1)/4),:) xx(round(length(xx1)/2),:) xx(end,:) tt0(1) tt0(end)];
-UB=zeros(1,18);
-LB=zeros(1,18);
-UB(1:16)=Inf;
-LB(1:16)=-Inf;
-UB(17)=2*pi/0.925195985;
-UB(18)=Inf;
 % Optimization !
-%options_grad = optimoptions(@fmincon,'Display','iter',"Algorithm","active-set",'MaxFunctionEvaluations',100000,'SpecifyConstraintGradient',true,'CheckGradient',true,'MaxIterations',50000);
-options_grad = optimoptions(@fmincon,'Display','iter',"Algorithm","active-set",'MaxFunctionEvaluations',100000,'SpecifyObjectiveGradient',true,'MaxIterations',50000);
-ysol=fmincon(@(X) obj_fun(X),y0,[],[],[],[],LB,UB,@(X) con_ms(X),options_grad);
+options_grad = optimoptions(@fmincon, 'Display', 'iter', "Algorithm", "active-set", ...
+    'MaxFunctionEvaluations', 100000, 'SpecifyObjectiveGradient', true, 'MaxIterations', 50000);
+ysol = fmincon(@(X) obj_fun(X), y0, [], [], [], [], LB, UB, @(X) con_ms(X), options_grad);
 
-xx1_sol=ysol(1:4);
-xx2_sol=ysol(5:8);
-xx3_sol=ysol(9:12);
-xx4_sol=ysol(13:16);
-tt_sol=time_tab(ysol(17),ysol(18),4);
+xx1_sol = ysol(1:4);
+xx2_sol = ysol(5:8);
+xx3_sol = ysol(9:12);
+xx4_sol = ysol(13:16);
+tt_sol = time_tab(ysol(17), ysol(18), 4);
 
-
-[tt2,traj1]=ode113(@PBRFBP_rhs_STM,[tt_sol(1) tt_sol(2)],[xx1_sol reshape(eye(4),1,16)], options, mu);
-[tt3,traj2]=ode113(@PBRFBP_rhs_STM,[tt_sol(2) tt_sol(3)],[xx2_sol reshape(eye(4),1,16)], options, mu);
-[tt4,traj3]=ode113(@PBRFBP_rhs_STM,[tt_sol(3) tt_sol(4)],[xx3_sol reshape(eye(4),1,16)], options, mu);
+[tt2, traj1] = ode113(@PBRFBP_rhs_STM, [tt_sol(1) tt_sol(2)], [xx1_sol reshape(eye(4), 1, 16)], options, mu);
+[tt3, traj2] = ode113(@PBRFBP_rhs_STM, [tt_sol(2) tt_sol(3)], [xx2_sol reshape(eye(4), 1, 16)], options, mu);
+[tt4, traj3] = ode113(@PBRFBP_rhs_STM, [tt_sol(3) tt_sol(4)], [xx3_sol reshape(eye(4), 1, 16)], options, mu);
 
 figure
 hold on
 xlabel('x')
 ylabel('y')
-scatter(-mu,0,10,'red')
-scatter(1-mu,0,10,'k')
+scatter(-mu, 0, 10, 'red')
+scatter(1 - mu, 0, 10, 'k')
 %scatter(xx1_sol(1),xx1_sol(2),10,'b','filled')
-scatter(xx2_sol(1),xx2_sol(2),10,'b','filled')
-scatter(xx3_sol(1),xx3_sol(2),10,'b','filled')
+scatter(xx2_sol(1), xx2_sol(2), 10, 'b', 'filled')
+scatter(xx3_sol(1), xx3_sol(2), 10, 'b', 'filled')
 %scatter(xx4_sol(1),xx4_sol(2),10,'b','filled')
-plot(traj1(:,1),traj1(:,2))
-plot(traj2(:,1),traj2(:,2))
-plot(traj3(:,1),traj3(:,2))
+plot(traj1(:, 1), traj1(:, 2))
+plot(traj2(:, 1), traj2(:, 2))
+plot(traj3(:, 1), traj3(:, 2))
 hold off
+
 %% Functions
 
 function dXdt = PBRFBP_rhs(t,X,mu)
