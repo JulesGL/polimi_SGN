@@ -5,7 +5,7 @@
 %
 % SGN - 12/2022 - Jules GOMEL ☺
 % AY 2022-23 -- Prof. F. Topputo and P. Di Lizia; TA: A. Morselli and M. Maestrini
-
+ 
 %% Clear Constants & Kernels
 clc; clear; close all
 cspice_kclear();

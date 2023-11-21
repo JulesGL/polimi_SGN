@@ -6,7 +6,7 @@
 %
 % SGN - 08/11/2022 - Jules GOMEL ☺
 % AY 2022-23 -- Prof. F. Topputo and P. Di Lizia; TA: A. Morselli and M. Maestrini
-
+ 
 clear; clc; close all
 format long g
 
