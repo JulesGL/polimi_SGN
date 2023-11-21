@@ -26,6 +26,6 @@ Feel free to explore the assignments and reach out if you have any questions or 
 
 **Note:** Please be aware that the content of this repository is for educational purposes and may contain proprietary information from the course. Respect the academic integrity and use the materials responsibly.
 
-References for Assignment 1
+**References for Assignment 1**
 
 Topputo, F. On optimal two-impulse Earth–Moon transfers in a four-body model. Celest Mech Dyn Astr 117, 279–313 (2013). https://doi.org/10.1007/s10569-013-9513-8
