@@ -2,19 +2,6 @@
 
 This repository contains my assignments and reports for the Spacecraft Guidance & Navigation course that I completed at Politecnico Di Milano from September 2022 to February 2023. The course was instructed by Professors Francesco Topputto and Pierluigi Di Lizia, with valuable assistance from Teaching Assistants Michele Maestrini and Alessandro Morselli.
 
-## Course Information
-
-- **University:** Politecnico Di Milano
-- **Course:** Spacecraft Guidance & Navigation
-- **Duration:** September 2022 to February 2023
-- **Professors:**
-  - Francesco Topputto
-  - Pierluigi Di Lizia
-
-## Teaching Assistants
-
-- Michele Maestrini
-- Alessandro Morselli
 
 ## Assignments
 
@@ -25,6 +12,15 @@ Feel free to explore the assignments and reach out if you have any questions or 
 ---
 
 **Note:** Please be aware that the content of this repository is for educational purposes and may contain proprietary information from the course. Respect the academic integrity and use the materials responsibly.
+
+## Course Information
+
+- **University:** Politecnico Di Milano
+- **Course:** Spacecraft Guidance & Navigation
+- **Duration:** September 2022 to February 2023
+- **Professors:**
+  - Francesco Topputto, PhD
+  - Pierluigi Di Lizia, PhD
 
 **References for Assignment 1**
 
