@@ -1,26 +1,34 @@
-% Jules GOMEL - SGN - Assignement 2 - Exercise 1
+% Exercise 1 :  Uncertainty propagation
+%
+% MatLab code for Assignment 2 - Exercise 1 : Different methods of
+% uncertainty propagation (LinCov, UT, MC...)
+%
+% SGN - 12/2022 - Jules GOMEL ☺
+% AY 2022-23 -- Prof. F. Topputo and P. Di Lizia; TA: A. Morselli and M. Maestrini
 
 %% Clear Constants & Kernels
 clc; clear all; close all
 cspice_kclear();
 format long g
+
 %% Constants & Kernels
 cspice_furnsh('assignment02.tm');
 
-t0='2022-11-11-19:08:49.824 UTC';
-t0_et=cspice_str2et(t0);
-r0_mean=[6054.30795817484,-3072.03883303992,-133.115352431876];
-v0_mean=[4.64750094824087,9.18608475681236,-0.62056520749034];
-x0_mean=[r0_mean,v0_mean]';
-P0=[5.6e-3  3.5e-3 -7.1e-4 0      0      0;
-    3.5e-3  9.7e-3  7.6e-4 0      0      0;
-    -7.1e-4 7.6e-4  8.1e-4 0      0      0;
-    0       0       0      2.8e-7 0      0;
-    0       0       0      0      2.7e-7 0;
-    0       0       0      0      0      9.6e-8];
+t0 = '2022-11-11-19:08:49.824 UTC';
+t0_et = cspice_str2et(t0);
+r0_mean = [6054.30795817484, -3072.03883303992, -133.115352431876];
+v0_mean = [4.64750094824087, 9.18608475681236, -0.62056520749034];
+x0_mean = [r0_mean, v0_mean]';
+P0 = [5.6e-3  3.5e-3 -7.1e-4 0      0      0;
+      3.5e-3  9.7e-3  7.6e-4 0      0      0;
+     -7.1e-4  7.6e-4  8.1e-4 0      0      0;
+      0      0      0      2.8e-7  0      0;
+      0      0      0      0      2.7e-7  0;
+      0      0      0      0      0      9.6e-8];
 
-GM=cspice_bodvrd('EARTH','GM',5);
-R_earth=cspice_bodvrd('EARTH','RADII',5);
+GM = cspice_bodvrd('EARTH', 'GM', 5);
+R_earth = cspice_bodvrd('EARTH', 'RADII', 5);
+
 % Time to be studied
 % options=odeset('AbsTol',2.5e-14,'RelTol',2.5e-14);
 % [tt,xx]=ode113(@Kepler,[0 1000000],[x0_mean' reshape(eye(6),1,36)]',options);
@@ -38,126 +46,141 @@ R_earth=cspice_bodvrd('EARTH','RADII',5);
 % a=.5*(min+max);
 % T=sqrt(4*pi^2/GM*a^3);
 
-T=68346.6610065473;
-t_tab=[0,.5,1,1.5,2,2.5,3,3.5,4]*T+t0_et;
+T = 68346.6610065473;
+t_tab = [0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4] * T + t0_et;
+
 %% Ex1 - 1) LinCov
 tic
-X_lincov=x0_mean.*ones(6,8);
-P_lincov=P0.*ones(6,6,8);
+X_lincov = x0_mean .* ones(6, 8);
+P_lincov = P0 .* ones(6, 6, 8);
 
-options=odeset('AbsTol',2.5e-12,'RelTol',2.5e-12);
-[tt,xx_STM]=ode113(@Kepler,t_tab,[x0_mean' reshape(eye(6),1,36)]',options);
+options = odeset('AbsTol', 2.5e-12, 'RelTol', 2.5e-12);
+[tt, xx_STM] = ode113(@Kepler, t_tab, [x0_mean' reshape(eye(6), 1, 36)]', options);
 
-for i=1:8
-    X_lincov(:,i)=xx_STM(i+1,1:6);
-    STM_i=(reshape(xx_STM(i+1,7:42),6,6))';
-    P_lincov(:,:,i)=STM_i*P0*STM_i';
+for i = 1:8
+    X_lincov(:, i) = xx_STM(i + 1, 1:6);
+    STM_i = (reshape(xx_STM(i + 1, 7:42), 6, 6))';
+    P_lincov(:, :, i) = STM_i * P0 * STM_i';
 end
 toc
+
 %% Ex1 - 1) UT
 tic
-[X_UT,P_UT]=UT(x0_mean,P0,t_tab);
+[X_UT, P_UT] = UT(x0_mean, P0, t_tab);
 toc
 %% Ex1 - 1) Comparison
-[x,y,z] = sphere;
-x = x*R_earth(1);
-y = y*R_earth(1);
-z = z*R_earth(3);
+[x, y, z] = sphere;
+x = x * R_earth(1);
+y = y * R_earth(1);
+z = z * R_earth(3);
 
+% Plotting standard deviation
 figure 
 hold on
 xlabel('Time (odd → pericenter, even → apocenter)')
 ylabel('Ranging standard deviation (km)')
-for i=1:8
-    scatter(i,sqrt(trace(P_UT(1:3,1:3,i))),'blue',"square")
-    scatter(i,sqrt(trace(P_lincov(1:3,1:3,i))),'red',"o")
+
+for i = 1:8
+    scatter(i, sqrt(trace(P_UT(1:3, 1:3, i))), 'blue', "square")
+    scatter(i, sqrt(trace(P_lincov(1:3, 1:3, i))), 'red', "o")
 end
-%legend('UT1','LinCov1','UT2','LinCov2','UT3','LinCov3','UT4','LinCov4','UT5' ...
-%    ,'LinCov5','UT6','LinCov6','UT7','LinCov7','UT8','LinCov8')
-legend('UT','LinCov')
+
+legend('UT', 'LinCov')
 hold off
 
+% 3D plot
 figure   
-for i=1:8
-    plot3(X_UT(1,i),X_UT(2,i),X_UT(3,i),"square")
+for i = 1:8
+    plot3(X_UT(1, i), X_UT(2, i), X_UT(3, i), "square")
     hold on
-    plot3(X_lincov(1,i),X_lincov(2,i),X_lincov(3,i),"o")
+    plot3(X_lincov(1, i), X_lincov(2, i), X_lincov(3, i), "o")
 end
-surf(x,y,z)
-legend('UT1','LinCov1','UT2','LinCov2','UT3','LinCov3','UT4','LinCov4','UT5' ...
-    ,'LinCov5','UT6','LinCov6','UT7','LinCov7','UT8','LinCov8')
+
+surf(x, y, z)
+legend('UT1', 'LinCov1', 'UT2', 'LinCov2', 'UT3', 'LinCov3', 'UT4', 'LinCov4', ...
+    'UT5', 'LinCov5', 'UT6', 'LinCov6', 'UT7', 'LinCov7', 'UT8', 'LinCov8')
+
 xlabel('x-axis (km)')
 ylabel('y-axis (km)')
 zlabel('z-axis (km)')
 axis equal
-view(40,35)
+view(40, 35)
 
+% Range plot
 figure
 hold on
-for i=1:8
-    scatter(i,norm(X_lincov(1:3,i)),'blue',"square")
-    scatter(i,norm(X_UT(1:3,i)),'red',"o")
+for i = 1:8
+    scatter(i, norm(X_lincov(1:3, i)), 'blue', "square")
+    scatter(i, norm(X_UT(1:3, i)), 'red', "o")
 end
-legend('LinCov','UT')
+
+legend('LinCov', 'UT')
 xlabel('Time (odd → pericenter, even → apocenter)')
 ylabel('Range (km)')
 hold off
 
+% Velocity plot
 figure
 hold on
-for i=1:8
-    scatter(i,norm(X_lincov(4:6,i)),'blue',"square")
-    scatter(i,norm(X_UT(4:6,i)),'red',"o")
+for i = 1:8
+    scatter(i, norm(X_lincov(4:6, i)), 'blue', "square")
+    scatter(i, norm(X_UT(4:6, i)), 'red', "o")
 end
-legend('LinCov','UT')
+
+legend('LinCov', 'UT')
 xlabel('Time (odd → pericenter, even → apocenter)')
 ylabel('Velocity (km/s)')
 hold off
 
 %% Ex1 - 2) Monte-Carlo
 tic
-X_MC=x0_mean.*ones(6,8);
-P_MC=P0.*ones(6,6,8);
+X_MC = x0_mean .* ones(6, 8);
+P_MC = P0 .* ones(6, 6, 8);
 
-n=100;
-X_samples=mvnrnd(x0_mean',P0,n);
-Y_samples=zeros(6,100,8);
-for i=1:n
-    options=odeset('AbsTol',2.5e-8,'RelTol',2.5e-8);
-    [~,YY_STM]=ode113(@Kepler,t_tab,[X_samples(i,:) reshape(eye(6),1,36)]',options);
-    for k=1:8
-        Y_samples(:,i,k)=YY_STM(k+1,1:6);
+n = 100;
+X_samples = mvnrnd(x0_mean', P0, n);
+Y_samples = zeros(6, 100, 8);
+
+for i = 1:n
+    options = odeset('AbsTol', 2.5e-8, 'RelTol', 2.5e-8);
+    [~, YY_STM] = ode113(@Kepler, t_tab, [X_samples(i, :) reshape(eye(6), 1, 36)]', options);
+
+    for k = 1:8
+        Y_samples(:, i, k) = YY_STM(k+1, 1:6);
     end
 end
 
-for k=1:8
-X_MC(:,k)=1/n*(sum(Y_samples(:,:,k),2));
-P_MC(:,:,k)=1/(n-1)*(Y_samples(:,:,k)-X_MC(:,k))*((Y_samples(:,:,k)-X_MC(:,k))');
+for k = 1:8
+    X_MC(:, k) = 1/n * (sum(Y_samples(:, :, k), 2));
+    P_MC(:, :, k) = 1/(n-1) * (Y_samples(:, :, k) - X_MC(:, k)) * ((Y_samples(:, :, k) - X_MC(:, k))');
 end
 toc
+
 %% Ex1 - Covariance Matrix comparison
 figure 
 hold on
-for i=1:8
-    scatter(i,sqrt(trace(P_UT(1:3,1:3,i))),'blue','square')
-    scatter(i,sqrt(trace(P_lincov(1:3,1:3,i))),'red','o')
-    scatter(i,sqrt(trace(P_MC(1:3,1:3,i))),'green','*')
+for i = 1:8
+    scatter(i, sqrt(trace(P_UT(1:3, 1:3, i))), 'blue', 'square')
+    scatter(i, sqrt(trace(P_lincov(1:3, 1:3, i))), 'red', 'o')
+    scatter(i, sqrt(trace(P_MC(1:3, 1:3, i))), 'green', '*')
 end
+
 xlabel('Time (odd → pericenter, even → apocenter)')
 ylabel('Position standard deviation (km)')
-legend('UT','LinCov','MC')
+legend('UT', 'LinCov', 'MC')
 hold off
 
 figure 
 hold on
-for i=1:8
-    scatter(i,sqrt(trace(P_UT(4:6,4:6,i))),'blue','square')
-    scatter(i,sqrt(trace(P_lincov(4:6,4:6,i))),'red','o')
-    scatter(i,sqrt(trace(P_MC(4:6,4:6,i))),'green','*')
+for i = 1:8
+    scatter(i, sqrt(trace(P_UT(4:6, 4:6, i))), 'blue', 'square')
+    scatter(i, sqrt(trace(P_lincov(4:6, 4:6, i))), 'red', 'o')
+    scatter(i, sqrt(trace(P_MC(4:6, 4:6, i))), 'green', '*')
 end
+
 xlabel('Time (odd → pericenter, even → apocenter)')
 ylabel('Velocity standard deviation (km/s)')
-legend('UT','LinCov','MC')
+legend('UT', 'LinCov', 'MC')
 hold off
 
 %% Ex1 - Subplot MC - Apogee 
@@ -166,64 +189,62 @@ hold off
 figure 
 
 subplot(2,2,1)
-for i=1:100
-    scatter3(Y_samples(1,i,1),Y_samples(2,i,1),Y_samples(3,i,1))
+for i = 1:100
+    scatter3(Y_samples(1, i, 1), Y_samples(2, i, 1), Y_samples(3, i, 1))
     hold on
 end
-error_ellipse(P_MC(1:3,1:3,1),X_MC(1:3,1));
+error_ellipse(P_MC(1:3, 1:3, 1), X_MC(1:3, 1));
 xlabel('X-coordinate in ECI [km]')
 ylabel('Y-coordinate in ECI [km]')
 zlabel('Z-coordinate in ECI [km]')
-view(80,60)
+view(80, 60)
 title('First apogee')
 
 subplot(2,2,2)
-for i=1:100
-    scatter3(Y_samples(1,i,3),Y_samples(2,i,3),Y_samples(3,i,3))
+for i = 1:100
+    scatter3(Y_samples(1, i, 3), Y_samples(2, i, 3), Y_samples(3, i, 3))
     hold on
-
 end
-error_ellipse(P_MC(1:3,1:3,3),X_MC(1:3,3));
+error_ellipse(P_MC(1:3, 1:3, 3), X_MC(1:3, 3));
 xlabel('X-coordinate in ECI [km]')
 ylabel('Y-coordinate in ECI [km]')
 zlabel('Z-coordinate in ECI [km]')
-view(80,60)
+view(80, 60)
 title('Second apogee')
 
-
 subplot(2,2,3)
-for i=1:100
-    scatter3(Y_samples(1,i,5),Y_samples(2,i,5),Y_samples(3,i,5))
+for i = 1:100
+    scatter3(Y_samples(1, i, 5), Y_samples(2, i, 5), Y_samples(3, i, 5))
     hold on
 end
-error_ellipse(P_MC(1:3,1:3,5),X_MC(1:3,5));
+error_ellipse(P_MC(1:3, 1:3, 5), X_MC(1:3, 5));
 xlabel('X-coordinate in ECI [km]')
 ylabel('Y-coordinate in ECI [km]')
 zlabel('Z-coordinate in ECI [km]')
-view(80,60)
+view(80, 60)
 title('Third apogee')
 
 subplot(2,2,4)
-for i=1:100
-    scatter3(Y_samples(1,i,7),Y_samples(2,i,7),Y_samples(3,i,7))
+for i = 1:100
+    scatter3(Y_samples(1, i, 7), Y_samples(2, i, 7), Y_samples(3, i, 7))
     hold on
 end
-error_ellipse(P_MC(1:3,1:3,7),X_MC(1:3,7));
+error_ellipse(P_MC(1:3, 1:3, 7), X_MC(1:3, 7));
 xlabel('X-coordinate in ECI [km]')
 ylabel('Y-coordinate in ECI [km]')
 zlabel('Z-coordinate in ECI [km]')
-view(80,60)
+view(80, 60)
 title('Fourth apogee')
 
 %% Ex1 - Subplot MC - Perigee
 figure 
 
 subplot(2,2,1)
-for i=1:100
-    scatter3(Y_samples(1,i,2),Y_samples(2,i,2),Y_samples(3,i,2))
+for i = 1:100
+    scatter3(Y_samples(1, i, 2), Y_samples(2, i, 2), Y_samples(3, i, 2))
     hold on
 end
-error_ellipse(P_MC(1:3,1:3,2),X_MC(1:3,2));
+error_ellipse(P_MC(1:3, 1:3, 2), X_MC(1:3, 2));
 xlabel('X-coordinate in ECI [km]')
 ylabel('Y-coordinate in ECI [km]')
 zlabel('Z-coordinate in ECI [km]')
@@ -231,25 +252,23 @@ view(80,60)
 title('First perigee')
 
 subplot(2,2,2)
-for i=1:100
-    scatter3(Y_samples(1,i,4),Y_samples(2,i,4),Y_samples(3,i,4))
+for i = 1:100
+    scatter3(Y_samples(1, i, 4), Y_samples(2, i, 4), Y_samples(3, i, 4))
     hold on
-
 end
-error_ellipse(P_MC(1:3,1:3,4),X_MC(1:3,4));
+error_ellipse(P_MC(1:3, 1:3, 4), X_MC(1:3, 4));
 xlabel('X-coordinate in ECI [km]')
 ylabel('Y-coordinate in ECI [km]')
 zlabel('Z-coordinate in ECI [km]')
 view(80,60)
 title('Second perigee')
 
-
 subplot(2,2,3)
-for i=1:100
-    scatter3(Y_samples(1,i,6),Y_samples(2,i,6),Y_samples(3,i,6))
+for i = 1:100
+    scatter3(Y_samples(1, i, 6), Y_samples(2, i, 6), Y_samples(3, i, 6))
     hold on
 end
-error_ellipse(P_MC(1:3,1:3,6),X_MC(1:3,6));
+error_ellipse(P_MC(1:3, 1:3, 6), X_MC(1:3, 6));
 xlabel('X-coordinate in ECI [km]')
 ylabel('Y-coordinate in ECI [km]')
 zlabel('Z-coordinate in ECI [km]')
@@ -257,116 +276,111 @@ view(80,60)
 title('Third perigee')
 
 subplot(2,2,4)
-for i=1:100
-    scatter3(Y_samples(1,i,8),Y_samples(2,i,8),Y_samples(3,i,8))
+for i = 1:100
+    scatter3(Y_samples(1, i, 8), Y_samples(2, i, 8), Y_samples(3, i, 8))
     hold on
 end
-error_ellipse(P_MC(1:3,1:3,8),X_MC(1:3,8));
+error_ellipse(P_MC(1:3, 1:3, 8), X_MC(1:3, 8));
 xlabel('X-coordinate in ECI [km]')
 ylabel('Y-coordinate in ECI [km]')
 zlabel('Z-coordinate in ECI [km]')
 view(80,60)
 title('Fourth perigee')
 
-
 %% Functions
 
-function RHS=Kepler(~,X)
-    GM=cspice_bodvrd('EARTH','GM',1);
-    r=norm(X(1:3));
-    dXdt(1:3)=X(4:6);
-    dXdt(4:6)=-GM/r^3*X(1:3);
-    STM=(reshape(X(7:42),6,6))';
+function RHS = Kepler(~, X)
+    GM = cspice_bodvrd('EARTH', 'GM', 1);
+    r = norm(X(1:3));
+    dXdt(1:3) = X(4:6);
+    dXdt(4:6) = -GM/r^3 * X(1:3);
+    STM = (reshape(X(7:42), 6, 6))';
     
-    omegaxx=3*GM/r^5*X(1)^2-GM/r^3;
-    omegaxy=3*GM/r^5*X(2)*X(1);
-    omegayy=3*GM/r^5*X(2)^2-GM/r^3;
-    omegazx=3*GM/r^5*X(3)*X(1);
-    omegazy=3*GM/r^5*X(3)*X(2);
-    omegazz=3*GM/r^5*X(3)^2-GM/r^3;
-    A=[0 0 0 1 0 0;
-       0 0 0 0 1 0;
-       0 0 0 0 0 1;
-       omegaxx omegaxy omegazx  0 0 0;
-       omegaxy omegayy omegazy  0 0 0;
-       omegazx omegazy omegazz  0 0 0];
-    dSTMdt=A*STM;
+    omegaxx = 3 * GM/r^5 * X(1)^2 - GM/r^3;
+    omegaxy = 3 * GM/r^5 * X(2) * X(1);
+    omegayy = 3 * GM/r^5 * X(2)^2 - GM/r^3;
+    omegazx = 3 * GM/r^5 * X(3) * X(1);
+    omegazy = 3 * GM/r^5 * X(3) * X(2);
+    omegazz = 3 * GM/r^5 * X(3)^2 - GM/r^3;
+    A = [0 0 0 1 0 0;
+         0 0 0 0 1 0;
+         0 0 0 0 0 1;
+         omegaxx omegaxy omegazx  0 0 0;
+         omegaxy omegayy omegazy  0 0 0;
+         omegazx omegazy omegazz  0 0 0];
+    dSTMdt = A * STM;
 
-    RHS=[dXdt';
-        dSTMdt(1,1:6)';
-        dSTMdt(2,1:6)';
-        dSTMdt(3,1:6)';
-        dSTMdt(4,1:6)';
-        dSTMdt(5,1:6)';
-        dSTMdt(6,1:6)';];
+    RHS = [dXdt';
+           dSTMdt(1,1:6)';
+           dSTMdt(2,1:6)';
+           dSTMdt(3,1:6)';
+           dSTMdt(4,1:6)';
+           dSTMdt(5,1:6)';
+           dSTMdt(6,1:6)';];
 end
 
-%UT
+% UT
 
-function sigma_p=sigma_points(n,X0,P0)
-    sigma_p=zeros(6,2*n+1);
-    sigma_p(:,1)=X0;
-    k=0;
-    alpha=1e-3;
-    lambda=alpha^2*(n+k)-n;
-    Pn=sqrtm((n+lambda)*P0);
-%     for j=2:(2*n+1)
-%         if (j<=n+1)
-%             sigma_p(:,j)=X0+Pn(:,j-1)';
-%         else
-%             sigma_p(:,j)=X0-Pn(:,j-n-1)';
-%         end
-%     end
+function sigma_p = sigma_points(n, X0, P0)
+    sigma_p = zeros(6, 2*n+1);
+    sigma_p(:, 1) = X0;
+    k = 0;
+    alpha = 1e-3;
+    lambda = alpha^2 * (n+k) - n;
+    Pn = sqrtm((n+lambda) * P0);
+    
     for i = 1:n
-        sigma_p(:,i+1) = X0 + Pn(:,i);
-        sigma_p(:,i+1+n) = X0 - Pn(:,i);
+        sigma_p(:, i+1) = X0 + Pn(:, i);
+        sigma_p(:, i+1+n) = X0 - Pn(:, i);
     end
 end
 
-function [X_UT,P_UT]=UT(x0_mean,P0,t_tab)
-
-        % Step 0 : Constants
-    n=6;
-    k=0;
-    beta=2;
-    alpha=1e-3;
-    lambda=alpha^2*(n+k)-n;
-    X_UT=zeros(6,8);
-    P_UT=zeros(6,6,8);
-    % Step 1 : Generate Sigma Points
-    x_p=sigma_points(n,x0_mean,P0);
-    % Step 2 : Propagate Sigma Points
-    y_p=zeros(6,13,k);
+function [X_UT, P_UT] = UT(x0_mean, P0, t_tab)
+    n = 6;
+    k = 0;
+    beta = 2;
+    alpha = 1e-3;
+    lambda = alpha^2 * (n+k) - n;
+    X_UT = zeros(6, 8);
+    P_UT = zeros(6, 6, 8);
+    x_p = sigma_points(n, x0_mean, P0);
+    y_p = zeros(6, 13, k);
     
-    for j=1:size(x_p,2)
-        options=odeset('AbsTol',2.5e-14,'RelTol',2.5e-14);
-        [~,dX_p]=ode113(@Kepler,t_tab,[x_p(:,j)' reshape(eye(6),1,36)]',options);
-        for k=1:8
-            y_p(:,j,k)=dX_p(k+1,1:6)';
+    for j = 1:size(x_p, 2)
+        options = odeset('AbsTol', 2.5e-14, 'RelTol', 2.5e-14);
+        [~, dX_p] = ode113(@Kepler, t_tab, [x_p(:, j)' reshape(eye(6), 1, 36)]', options);
+        
+        for k = 1:8
+            y_p(:, j, k) = dX_p(k+1, 1:6)';
         end
     end
-    % Step 3 : Compute weights
-    W0m=lambda/(n+lambda);
-    W0c=W0m+(1-alpha^2+beta);
-    Wim=1/(2*(n+lambda));
-    Wic=Wim;
-    % Step 4 : Compute sample mean and sample variance
-    for k=1:8
-    Y_mean_UT=y_p(:,1,k)*W0m+sum(y_p(:,2:end,k),2)*Wim;
-    P_mean_UT=zeros(6);
-    for j=1:(2*n+1)
-        if j==1
-            P_mean_UT=P_mean_UT+W0c*(y_p(:,j,k)-Y_mean_UT)*(y_p(:,j,k)-Y_mean_UT)';
-        else
-            P_mean_UT=P_mean_UT+Wic*(y_p(:,j,k)-Y_mean_UT)*(y_p(:,j,k)-Y_mean_UT)';
+    
+    W0m = lambda / (n+lambda);
+    W0c = W0m + (1 - alpha^2 + beta);
+    Wim = 1 / (2 * (n+lambda));
+    Wic = Wim;
+    
+    for k = 1:8
+        Y_mean_UT = y_p(:, 1, k) * W0m + sum(y_p(:, 2:end, k), 2) * Wim;
+        P_mean_UT = zeros(6);
+        
+        for j = 1:(2*n+1)
+            if j == 1
+                P_mean_UT = P_mean_UT + W0c * (y_p(:, j, k) - Y_mean_UT) * (y_p(:, j, k) - Y_mean_UT)';
+            else
+                P_mean_UT = P_mean_UT + Wic * (y_p(:, j, k) - Y_mean_UT) * (y_p(:, j, k) - Y_mean_UT)';
+            end
         end
-    end
-    X_UT(:,k)=Y_mean_UT;
-    P_UT(:,:,k)=P_mean_UT;
+        
+        X_UT(:, k) = Y_mean_UT;
+        P_UT(:, :, k) = P_mean_UT;
     end
 end
 
-%% File exchange - error ellispoid
+
+%% File exchange - error ellispoid - cf References 
+% AJ Johnson (2023). error_ellipse (https://www.mathworks.com/matlabcentral/fileexchange/4705-error_ellipse)
+% MATLAB Central File Exchange. Retrieved November 21, 2023. 
 
 function h=error_ellipse(varargin)
 % ERROR_ELLIPSE - plot an error ellipse, or ellipsoid, defining confidence region

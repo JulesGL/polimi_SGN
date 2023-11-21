@@ -1,4 +1,10 @@
-% Jules GOMEL - SGN - Assignement 2 - Exercise 2
+% Exercise 2 :  Batch filters
+%
+% MatLab code for Assignment 2 - Exercise 2 : state estimation and batch
+% filters 
+%
+% SGN - 12/2022 - Jules GOMEL ☺
+% AY 2022-23 -- Prof. F. Topputo and P. Di Lizia; TA: A. Morselli and M. Maestrini
 
 %% Clear Constants & Kernels
 clc; clear; close all

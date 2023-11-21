@@ -1,6 +1,9 @@
-% Jules GOMEL 
-% SGN - Assignement 2 - Exercise 3
-% 23/12/2022 - Polimi
+% Exercise 3 :  Sequential filters
+%
+% MatLab code for Assignment 2 - Exercise 3 : Object on a camera, UKF, EKF
+%
+% SGN - 12/2022 - Jules GOMEL ☺
+% AY 2022-23 -- Prof. F. Topputo and P. Di Lizia; TA: A. Morselli and M. Maestrini
 
 %% Clear Constants & Kernels
 clc; clear; close all

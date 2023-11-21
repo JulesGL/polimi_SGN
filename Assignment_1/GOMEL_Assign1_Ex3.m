@@ -1,7 +1,7 @@
 % 
 % Exercise 3 :  Continuous guidance
 %
-% Earth-Mars transfer problem
+% MatLab code for Assignment 1 - Exercise 3 : Earth-Mars transfer problem
 %
 % SGN - 08/11/2022 - Jules GOMEL ☺
 % AY 2022-23 -- Prof. F. Topputo and P. Di Lizia; TA: A. Morselli and M. Maestrini

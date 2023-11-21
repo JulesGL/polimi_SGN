@@ -1,6 +1,7 @@
 % 
 % Exercise 2 :  Impulsive guidance
 %
+% MatLab code for Assignment 1 - Exercise 2 
 % Two impulse transfer problem : First guess, simple shooting and multiple
 % shooting
 %
