@@ -25,3 +25,7 @@ Feel free to explore the assignments and reach out if you have any questions or 
 ## References for Assignment 1
 
 Topputo, F. On optimal two-impulse Earth–Moon transfers in a four-body model. Celest Mech Dyn Astr 117, 279–313 (2013). https://doi.org/10.1007/s10569-013-9513-8
+
+## References for Assignment 2
+
+AJ Johnson (2023). error_ellipse (https://www.mathworks.com/matlabcentral/fileexchange/4705-error_ellipse), MATLAB Central File Exchange. Retrieved November 21, 2023. 
